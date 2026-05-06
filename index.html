@@ -32,6 +32,17 @@ body.frozen * {
   user-select: none !important;
 }
 
+/* Disable all buttons, inputs, links, etc. */
+body.frozen button,
+body.frozen input,
+body.frozen a,
+body.frozen textarea,
+body.frozen select {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.5 !important;
+}
+
 #freeze-overlay {
   position: fixed;
   top: 0;
@@ -376,6 +387,76 @@ function beep(freq = 800, duration = 100) {
   } catch(e) {}
 }
 
+// BLOCK BACK BUTTON AND NAVIGATION
+let isPrankActive = false;
+
+function blockBackButton() {
+  if (!isPrankActive) return;
+  
+  window.history.pushState(null, null, window.location.href);
+}
+
+// DISABLE ALL USER INTERACTIONS
+function disableAllInteractions() {
+  // Disable right-click
+  document.addEventListener('contextmenu', (e) => {
+    if (isPrankActive) e.preventDefault();
+  });
+  
+  // Disable keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (isPrankActive) {
+      // Block: Escape, Back, Alt+Left, Ctrl+W, etc.
+      if (e.key === 'Escape' || 
+          e.key === 'Backspace' ||
+          e.altKey || 
+          (e.ctrlKey && (e.key === 'w' || e.key === 'q' || e.key === 'r'))) {
+        e.preventDefault();
+        return false;
+      }
+    }
+  });
+  
+  // Disable text selection
+  document.addEventListener('selectstart', (e) => {
+    if (isPrankActive) e.preventDefault();
+  });
+  
+  // Disable drag
+  document.addEventListener('drag', (e) => {
+    if (isPrankActive) e.preventDefault();
+  });
+  
+  // Disable copy/paste
+  document.addEventListener('copy', (e) => {
+    if (isPrankActive) e.preventDefault();
+  });
+  
+  document.addEventListener('paste', (e) => {
+    if (isPrankActive) e.preventDefault();
+  });
+}
+
+disableAllInteractions();
+
+window.addEventListener('popstate', function() {
+  if (isPrankActive) {
+    blockBackButton();
+  }
+});
+
+// Block leaving page
+window.addEventListener('beforeunload', function(e) {
+  if (isPrankActive) {
+    e.preventDefault();
+    e.returnValue = '';
+    return '';
+  }
+});
+
+// Initial history push
+window.history.pushState(null, null, window.location.href);
+
 // Scary boot messages
 const bootMessages = [
   "BIOS v4.2.1 Initializing...",
@@ -412,6 +493,10 @@ function addBootLog(msg, isError = false) {
 }
 
 function start() {
+  // PRANK IS ACTIVE - BLOCK EVERYTHING
+  isPrankActive = true;
+  blockBackButton();
+  
   document.documentElement.requestFullscreen().catch(e => {});
   document.getElementById("btn").style.display = "none";
   
@@ -540,6 +625,9 @@ function showChat() {
 }
 
 function showPrank() {
+  // PRANK OVER - ALLOW EVERYTHING AGAIN
+  isPrankActive = false;
+  
   document.getElementById("chat-container").classList.add("hidden");
   document.getElementById("final-prank").classList.remove("hidden");
   
