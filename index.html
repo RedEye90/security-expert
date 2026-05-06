@@ -5,120 +5,514 @@
 <title>System Boot</title>
 
 <style>
-body {
+* {
   margin: 0;
-  background: black;
-  font-family: monospace;
-  overflow: hidden;
-  color: white;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* FULL SCREEN FAKE LOCK UI */
-#overlay {
+body {
+  background: #000;
+  color: #0f0;
+  font-family: 'Courier New', monospace;
+  overflow: hidden;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+    opacity: 1;
+  }
+  20%, 24%, 55% {
+    opacity: 0;
+  }
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+@keyframes pulse-red {
+  0%, 100% { color: #f00; }
+  50% { color: #800; }
+}
+
+@keyframes scan-line {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
+
+#boot-screen {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: black;
-  z-index: 9999;
-  text-align: center;
+  background: #000;
+  z-index: 1000;
+  overflow: hidden;
 }
 
-#title {
-  margin-top: 40%;
-  font-size: 22px;
-  color: red;
-  animation: blink 0.8s infinite;
-}
-
-@keyframes blink {
-  50% { opacity: 0.2; }
-}
-
-#status {
-  margin-top: 20px;
-  font-size: 14px;
-  color: white;
-}
-
-/* TAP HINT */
-#hint {
-  position: fixed;
-  bottom: 20px;
+#scan {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
+  height: 2px;
+  background: rgba(0, 255, 0, 0.3);
+  animation: scan-line 3s linear infinite;
+}
+
+#center {
+  margin-top: 15%;
+  font-size: 24px;
+  color: #0f0;
+  animation: flicker 0.15s infinite;
+  text-shadow: 0 0 10px #0f0;
+}
+
+#boot-log {
+  margin-top: 5%;
+  padding: 0 20%;
+  text-align: left;
+  font-size: 13px;
+  color: #0f0;
+  height: 200px;
+  overflow-y: auto;
+  border: 2px solid #0f0;
+  background: rgba(0, 20, 0, 0.8);
+}
+
+.log-line {
+  margin: 5px 0;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.error-line {
+  color: #f00;
+  animation: pulse-red 0.8s infinite;
+  text-shadow: 0 0 5px #f00;
+}
+
+.warning-line {
+  color: #ff8800;
+}
+
+#progress-bar {
+  width: 60%;
+  height: 25px;
+  border: 2px solid #f00;
+  margin: 30px auto;
+  position: relative;
+  background: rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 10px #f00;
+}
+
+#fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #f00, #ff4444);
+  box-shadow: 0 0 10px #f00;
+  transition: width 0.1s linear;
+}
+
+#percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-weight: bold;
+  text-shadow: 0 0 5px #f00;
+}
+
+#msg {
+  margin-top: 30px;
+  color: #f00;
+  font-size: 16px;
+  animation: glitch 0.2s infinite;
+  text-shadow: 0 0 10px #f00;
+  font-weight: bold;
+}
+
+#btn {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px 30px;
+  background: #f00;
+  color: #000;
+  border: 3px solid #ff4444;
+  border-radius: 0;
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 0 20px #f00;
+  transition: all 0.2s;
+  letter-spacing: 2px;
+}
+
+#btn:hover {
+  box-shadow: 0 0 40px #f00;
+  transform: translateX(-50%) scale(1.05);
+}
+
+#btn:active {
+  transform: translateX(-50%) scale(0.95);
+}
+
+.hidden {
+  display: none !important;
+}
+
+#chat-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  overflow-y: auto;
+  padding: 20px;
+  z-index: 1001;
+}
+
+#chat {
+  max-width: 800px;
+  margin: 0 auto;
+  margin-top: 50px;
+}
+
+.chat-line {
+  margin: 15px 0;
+  font-size: 15px;
+  color: #0f0;
+  text-shadow: 0 0 5px #0f0;
+  font-family: 'Courier New', monospace;
+  animation: slideIn 0.5s ease-out;
+}
+
+.chat-line.error {
+  color: #f00;
+  text-shadow: 0 0 5px #f00;
+}
+
+.chat-line.warning {
+  color: #ff8800;
+  text-shadow: 0 0 5px #ff8800;
+}
+
+#final-prank {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1002;
+  flex-direction: column;
   text-align: center;
-  color: lime;
-  font-size: 14px;
-  z-index: 5;
+}
+
+#final-prank h1 {
+  font-size: 45px;
+  color: #0f0;
+  text-shadow: 0 0 20px #0f0;
+  margin: 10px 0;
+  animation: flicker 0.15s infinite;
+}
+
+#final-prank .prank-emoji {
+  font-size: 60px;
+  margin: 10px 0;
+  animation: flicker 0.15s infinite;
+}
+
+#final-prank .subtitle {
+  font-size: 18px;
+  color: #f00;
+  margin: 10px 0;
+  text-shadow: 0 0 10px #f00;
+  animation: glitch 0.2s infinite;
+}
+
+@keyframes red-flash {
+  0%, 100% { background: #000; }
+  50% { background: rgba(255, 0, 0, 0.3); }
+}
+
+@keyframes intense-vibrate {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-3px, 3px); }
+  20% { transform: translate(3px, -3px); }
+  30% { transform: translate(-3px, -3px); }
+  40% { transform: translate(3px, 3px); }
+  50% { transform: translate(-2px, 2px); }
+  60% { transform: translate(2px, -2px); }
+  70% { transform: translate(-2px, -2px); }
+  80% { transform: translate(2px, 2px); }
+  90% { transform: translate(-1px, 1px); }
+  100% { transform: translate(0, 0); }
+}
+
+#final-prank .bfc-msg {
+  font-size: 26px;
+  font-weight: bold;
+  color: #f00;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  text-shadow: 0 0 20px #f00, 0 0 40px #ff00ff;
+  animation: blink-bright 0.6s infinite;
+  letter-spacing: 2px;
+  padding: 0 10px;
 }
 </style>
 </head>
 
-<body onclick="startPrank()">
+<body>
 
-<div id="hint">Tap anywhere to verify system</div>
+<div id="boot-screen">
+  <div id="scan"></div>
+  
+  <div id="center">⚠ SYSTEM ALERT ⚠</div>
+  
+  <div id="boot-log"></div>
+  
+  <div id="progress-bar">
+    <div id="fill"></div>
+    <div id="percentage">0%</div>
+  </div>
+  
+  <div id="msg">Initializing...</div>
+  
+  <button id="btn" onclick="start()">START SECURITY SCAN</button>
+</div>
 
-<div id="overlay">
-  <div id="title">⚠ SYSTEM INITIALIZING ⚠</div>
-  <div id="status">Waiting for secure input...</div>
+<div id="chat-container" class="hidden"></div>
+
+<div id="final-prank" class="hidden">
+  <div class="prank-emoji">😂😂😂</div>
+  <h1>PRANK COMPLETE!</h1>
+  <div class="subtitle">CHUTIYA BANAYA TERE KO 😎</div>
+  <p style="color: #0f0; margin: 10px 0; font-size: 14px;">
+    TERA SYSTEM SAHI HAI<br>
+    BAS TERE KO DARAYA HA 🔥
+  </p>
+  <div class="bfc-msg">
+    BFC KA MAA KA BHAROSHA 😏🔥
+  </div>
 </div>
 
 <script>
-function startPrank() {
+// Create audio context for beep sounds
+function beep(freq = 800, duration = 100) {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = freq;
+    oscillator.type = 'sine';
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration / 1000);
+  } catch(e) {}
+}
 
-  // fullscreen (must be user tap)
-  let elem = document.documentElement;
+// Scary boot messages
+const bootMessages = [
+  "BIOS v4.2.1 Initializing...",
+  "CPU: Intel Core i7 Detected",
+  "Memory: 16GB RAM Detected",
+  "Security Check: Starting...",
+  "Firewall: DISABLED",
+  "Antivirus: OFFLINE",
+  "WARNING: Unauthorized Access Detected!",
+  "Scanning for intrusions...",
+  "Malware found: 47 files",
+  "System compromise: CRITICAL",
+  "⚠️ DEVICE LOCKED BY: CODEX_AI",
+  "Your device has been compromised",
+  "Do NOT close this window",
+  "Contact: CODEX_SECURITY [BLOCKED]",
+  "Attempting recovery...",
+  "Access denied - Root privileges required"
+];
 
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) {
-    elem.webkitRequestFullscreen();
+function addBootLog(msg, isError = false) {
+  const log = document.getElementById("boot-log");
+  const line = document.createElement("div");
+  line.className = "log-line" + (isError ? " error-line" : "");
+  line.textContent = "> " + msg;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  
+  if (isError) {
+    beep(300, 150);
+  } else {
+    beep(1200, 50);
   }
+}
 
-  let overlay = document.getElementById("overlay");
-  let status = document.getElementById("status");
-  let hint = document.getElementById("hint");
-
-  hint.style.display = "none";
-
-  let steps = [
-    "Scanning device...",
-    "Analyzing system files...",
-    "Detecting threats...",
-    "Bypassing security layer...",
-    "Connecting Codex AI...",
-    "System lock engaged..."
-  ];
-
-  let i = 0;
-
-  let interval = setInterval(() => {
-
-    status.innerText = steps[i] || "Processing...";
-
-    // vibration (android only)
-    if (navigator.vibrate) navigator.vibrate(120);
-
-    // shake effect
-    document.body.style.marginLeft = (Math.random()*10 - 5) + "px";
-
-    i++;
-
-    if (i >= steps.length) {
-      clearInterval(interval);
-
-      setTimeout(() => {
-        overlay.innerHTML = `
-          <div style="color:lime; margin-top:40%; font-size:20px;">
-            😂 PRANK COMPLETE 😂<br><br>
-            System restored successfully 😎
-          </div>
-        `;
-      }, 1500);
+function start() {
+  document.documentElement.requestFullscreen().catch(e => {});
+  document.getElementById("btn").style.display = "none";
+  
+  // START RED FLASHING
+  const bootScreen = document.getElementById("boot-screen");
+  bootScreen.style.animation = "red-flash 0.3s infinite";
+  
+  // Add boot logs
+  let logIndex = 0;
+  let logInterval = setInterval(() => {
+    if (logIndex < bootMessages.length) {
+      addBootLog(bootMessages[logIndex], logIndex > 5);
+      logIndex++;
+    } else {
+      clearInterval(logInterval);
     }
+  }, 600);
+  
+  let fill = document.getElementById("fill");
+  let msg = document.getElementById("msg");
+  let percentage = document.getElementById("percentage");
+  let progress = 0;
+  
+  let steps = [
+    "Connecting to remote server...",
+    "Authenticating credentials...",
+    "Encrypting system files...",
+    "Scanning hidden partitions...",
+    "Deleting recovery data...",
+    "Locking user access...",
+    "Preparing encryption payload...",
+    "SYSTEM LOCKED - CODEX CONTROL ACTIVE"
+  ];
+  
+  let i = 0;
+  let interval = setInterval(() => {
+    progress += Math.random() * 8 + 4;
+    if (progress > 100) progress = 100;
+    
+    fill.style.width = progress + "%";
+    percentage.textContent = Math.floor(progress) + "%";
+    
+    if (i < steps.length) {
+      msg.textContent = steps[i];
+      addBootLog(steps[i], true);
+      i++;
+    }
+    
+    // INTENSE VIBRATION PATTERN
+    if (navigator.vibrate) {
+      if (progress < 50) {
+        navigator.vibrate([100, 50, 100, 50]);
+      } else if (progress < 80) {
+        navigator.vibrate([200, 100, 200]);
+      } else {
+        navigator.vibrate([500, 200, 500]);
+      }
+    }
+    
+    // Screen shake effect
+    if (progress % 10 === 0) {
+      bootScreen.style.animation = "none";
+      setTimeout(() => {
+        bootScreen.style.animation = "red-flash 0.3s infinite";
+      }, 10);
+    }
+    
+    if (progress >= 100) {
+      clearInterval(interval);
+      bootScreen.style.animation = "none";
+      bootScreen.style.background = "#000";
+      setTimeout(() => {
+        showChat();
+      }, 2000);
+    }
+  }, 700);
+}
 
-  }, 900);
+function showChat() {
+  document.getElementById("boot-screen").style.display = "none";
+  const container = document.getElementById("chat-container");
+  container.classList.remove("hidden");
+  
+  const chat = document.getElementById("chat");
+  
+  function addChat(text, isError = false, delay = 0) {
+    setTimeout(() => {
+      const line = document.createElement("div");
+      line.className = "chat-line" + (isError ? " error" : "");
+      line.textContent = text;
+      chat.appendChild(line);
+      container.scrollTop = container.scrollHeight;
+      
+      if (isError) {
+        beep(400, 100);
+      } else {
+        beep(1200, 30);
+      }
+    }, delay);
+  }
+  
+  addChat("[SYSTEM]: Connecting to Codex AI Terminal...", true, 500);
+  addChat("[SYSTEM]: Connection established. Awaiting instructions...", false, 2000);
+  addChat("[SYSTEM]: Retrieving device information...", false, 3500);
+  addChat("[SYSTEM]: Device ID: 4A9E2D7F", false, 4500);
+  addChat("[SYSTEM]: Device Status: COMPROMISED", true, 5500);
+  addChat("[CODEX]: Your device has been locked", true, 6500);
+  addChat("[USER]: Bhai kya ho raha hai?? 😨😨", false, 7000);
+  addChat("[USER]: MERA DATA DELETE HO GAYA?!", true, 8000);
+  addChat("[SYSTEM]: Scanning for recovery options...", true, 8500);
+  addChat("[SYSTEM]: ERROR: No recovery found", true, 9500);
+  addChat("[CODEX]: 🔴 WARNING 🔴", true, 10000);
+  addChat("[CODEX]: Do NOT restart your device", true, 10500);
+  addChat("[CODEX]: Contact CODEX_SECURITY immediately", true, 11000);
+  addChat("", false, 11500);
+  addChat("[CODEX]: Just kidding! 😂😂", false, 12000);
+  addChat("[CODEX]: This is just a harmless prank", false, 12500);
+  addChat("[CODEX]: Time to reveal the truth...", false, 13000);
+  
+  setTimeout(() => {
+    showPrank();
+  }, 14000);
+}
+
+function showPrank() {
+  document.getElementById("chat-container").classList.add("hidden");
+  document.getElementById("final-prank").classList.remove("hidden");
+  
+  // Final beeps
+  beep(400, 200);
+  setTimeout(() => beep(500, 200), 300);
+  setTimeout(() => beep(600, 200), 600);
+  
+  if (navigator.vibrate) {
+    navigator.vibrate([100, 100, 100, 100, 100]);
+  }
 }
 </script>
 
